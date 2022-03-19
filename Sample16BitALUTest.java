@@ -7,13 +7,7 @@ import java.util.function.BiFunction;
 import static edu.gvsu.dlunit.DLUnit.*;
 
 /**
- * Test cases for a signed 16-bit ALU.
- * <p>
- * IMPORTANT:  These test cases do *not* thoroughly test the circuit.  You need to
- * re-name this class and add more tests!
- * <p>
- * <p>
- * Created by kurmasz on 8/8/16.
+ * Jack Darnell and Thanh Tran
  */
 public class Sample16BitALUTest {
 
