@@ -1,5 +1,7 @@
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.beans.Transient;
 import java.util.function.BiFunction;
 
 import static edu.gvsu.dlunit.DLUnit.*;
@@ -43,12 +45,44 @@ public class Sample16BitALUTest {
   }
 
   @Test
+  public void testAddu2() {
+    setPinUnsigned("InputA", 123);
+    setPinUnsigned("InputB", 456);
+    setPinUnsigned("Op", OpCodes.ADDU);
+    run();
+    Assert.assertEquals("Addition Output", (123 + 456) % 65536, readPinUnsigned("Output"));
+
+    // Overflow for unsigned addition is false by definition
+    Assert.assertEquals("Addition Overflow", false, readPin("Overflow"));
+  }
+
+
+  @Test
   public void testAddition() {
     setPinSigned("InputA", 23);
     setPinSigned("InputB", 44);
     setPinUnsigned("Op", OpCodes.ADD);
     run();
     Assert.assertEquals("Addition Output", 23 + 44, readPinSigned("Output"));
+    Assert.assertEquals("Addition Overflow", false, readPin("Overflow"));
+  }
+
+  @Test
+  public void testAddition2() {
+    setPinSigned("InputA", -23);
+    setPinSigned("InputB", 44);
+    setPinUnsigned("Op", OpCodes.ADD);
+    run();
+    Assert.assertEquals("Addition Output", -23 + 44, readPinSigned("Output"));
+    Assert.assertEquals("Addition Overflow", false, readPin("Overflow"));
+  }
+  @Test
+  public void testAddition3() {
+    setPinSigned("InputA", -23);
+    setPinSigned("InputB", -78);
+    setPinUnsigned("Op", OpCodes.ADD);
+    run();
+    Assert.assertEquals("Addition Output", -23 + -78, readPinSigned("Output"));
     Assert.assertEquals("Addition Overflow", false, readPin("Overflow"));
   }
 
@@ -61,6 +95,33 @@ public class Sample16BitALUTest {
     Assert.assertEquals("Subtraction Output", 24 - 45, readPinSigned("Output"));
     Assert.assertEquals("Subtraction Overflow", false, readPin("Overflow"));
   }
+  @Test
+  public void testSubtraction2() {
+    setPinSigned("InputA", -24);
+    setPinSigned("InputB", 45);
+    setPinUnsigned("Op", OpCodes.SUB);
+    run();
+    Assert.assertEquals("Subtraction Output", -24 - 45, readPinSigned("Output"));
+    Assert.assertEquals("Subtraction Overflow", false, readPin("Overflow"));
+  }
+  @Test
+  public void testSubtraction3() {
+    setPinSigned("InputA", 24);
+    setPinSigned("InputB", -45);
+    setPinUnsigned("Op", OpCodes.SUB);
+    run();
+    Assert.assertEquals("Subtraction Output", 24 - (-45), readPinSigned("Output"));
+    Assert.assertEquals("Subtraction Overflow", false, readPin("Overflow"));
+  }
+  @Test
+  public void testSubtraction4() {
+    setPinSigned("InputA", 5000);
+    setPinSigned("InputB", -10000);
+    setPinUnsigned("Op", OpCodes.SUB);
+    run();
+    Assert.assertEquals("Subtraction Output", 5000 - (-10000), readPinSigned("Output"));
+    Assert.assertEquals("Subtraction Overflow", false, readPin("Overflow"));
+  }
 
   @Test
   public void ltSigned() {
@@ -71,9 +132,18 @@ public class Sample16BitALUTest {
     Assert.assertEquals("Signed Less Than Output", 1, readPinSigned("Output"));
     Assert.assertEquals("Signed Less Than Overflow", false, readPin("Overflow"));
   }
-
   @Test
   public void ltSigned2() {
+    setPinSigned("InputA", -20);
+    setPinSigned("InputB", 6);
+    setPinUnsigned("Op", OpCodes.SLT);
+    run();
+    Assert.assertEquals("Signed Less Than Output", 1, readPinSigned("Output"));
+    Assert.assertEquals("Signed Less Than Overflow", false, readPin("Overflow"));
+  }
+
+  @Test
+  public void ltSigned3() {
     setPinSigned("InputA", 32767);
     setPinSigned("InputB", -1);
     setPinUnsigned("Op", OpCodes.SLT);
@@ -81,6 +151,34 @@ public class Sample16BitALUTest {
     Assert.assertEquals("Signed Less Than Output", 0, readPinSigned("Output"));
     Assert.assertEquals("Signed Less Than Overflow", false, readPin("Overflow"));
   }
+  @Test
+  public void ltSigned4() {
+    setPinSigned("InputA", 8);
+    setPinSigned("InputB", 6);
+    setPinUnsigned("Op", OpCodes.SLT);
+    run();
+    Assert.assertEquals("Signed Less Than Output", 0, readPinSigned("Output"));
+    Assert.assertEquals("Signed Less Than Overflow", false, readPin("Overflow"));
+  }
+  @Test
+  public void ltSigned5() {
+    setPinSigned("InputA", -100);
+    setPinSigned("InputB", -200);
+    setPinUnsigned("Op", OpCodes.SLT);
+    run();
+    Assert.assertEquals("Signed Less Than Output", 0, readPinSigned("Output"));
+    Assert.assertEquals("Signed Less Than Overflow", false, readPin("Overflow"));
+  }
+  @Test
+  public void ltSigned6() {
+    setPinSigned("InputA", -500);
+    setPinSigned("InputB", -20);
+    setPinUnsigned("Op", OpCodes.SLT);
+    run();
+    Assert.assertEquals("Signed Less Than Output", 1, readPinSigned("Output"));
+    Assert.assertEquals("Signed Less Than Overflow", false, readPin("Overflow"));
+  }
+  //CHECK OVERFLOW FOR LT
 
 
   public static void verifySigned(long a, long b, boolean checkOverflow) {
@@ -147,8 +245,53 @@ public class Sample16BitALUTest {
     verifyLogic("and", OpCodes.AND, 0xFF00, 0x0F0F, (a, b) -> a & b);
   }
   @Test
+  public void testAnd2() {
+    verifyLogic("and", OpCodes.AND, 0xFFA0, 0xAFF0, (a, b) -> a & b);
+  }
+  @Test
   public void testOr() {
     verifyLogic("or", OpCodes.OR, 0xFF00, 0x0F0F, (a, b) -> a | b);
+  }
+  @Test
+  public void testOr2() {
+    verifyLogic("or", OpCodes.OR, 0xFFAA, 0xAFAF, (a, b) -> a | b);
+  }
+  @Test
+  public void testXor() {
+    verifyLogic("xor", OpCodes.XOR, 0xFFA0, 0x0F0F, (a, b) -> a ^ b);
+  }
+  @Test
+  public void testXor2() {
+    verifyLogic("xor", OpCodes.XOR, 0x00AA, 0xAFAF, (a, b) -> a ^ b);
+  }
+  @Test
+  public void testlui(){
+    setPinSigned("InputA", 0x0001);
+    setPinSigned("InputB", -1);
+    setPinUnsigned("Op", OpCodes.LUI);
+    run();
+    Assert.assertEquals("Signed Less Than Output", 0x0100, readPinSigned("Output"));
+    Assert.assertEquals("Signed Less Than Overflow", false, readPin("Overflow"));
+  }
+
+  @Test
+  public void testlui2(){
+    setPinSigned("InputA", 0x1111);
+    setPinSigned("InputB", -1);
+    setPinUnsigned("Op", OpCodes.LUI);
+    run();
+    Assert.assertEquals("Signed Less Than Output", 0x1100, readPinSigned("Output"));
+    Assert.assertEquals("Signed Less Than Overflow", false, readPin("Overflow"));
+  }
+
+  @Test
+  public void testlui3(){
+    setPinSigned("InputA", 0x2200);
+    setPinSigned("InputB", -1);
+    setPinUnsigned("Op", OpCodes.LUI);
+    run();
+    Assert.assertEquals("Signed Less Than Output", 0x0000, readPinSigned("Output"));
+    Assert.assertEquals("Signed Less Than Overflow", false, readPin("Overflow"));
   }
 
 
